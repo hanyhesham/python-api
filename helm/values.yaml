@@ -1,0 +1,25 @@
+name: python-api
+replicaCount: 1
+image:
+  repository: python-api
+  pullPolicy: Always
+  tag: "latest"
+service:
+ type: ClusterIP
+ port: 8000
+ targetport: 8000
+resources: 
+  requests:
+    cpu: 100m
+    memory: 200m
+container:
+  port: 8000
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 4
+  targetCPUUtilizationPercentage: 80
+health:
+  path: "/health"
+  port: 8000
+runAsUser: 1000
