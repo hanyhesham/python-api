@@ -45,8 +45,8 @@ resource "aws_iam_user_policy" "ecr_policy" {
       ],
       "Effect": "Allow",
       "Resource": [
-        "arn:aws:s3:::hh-helm-dev/*",
-        "arn:aws:s3:::hh-helm-dev"
+        "arn:aws:s3:::python-api-helm/*",
+        "arn:aws:s3:::python-api-helm"
       ]
     },
     {

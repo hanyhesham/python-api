@@ -1,6 +1,6 @@
 terraform {
   backend "s3" {
-    bucket = "hany-terraformstate"
+    bucket = "python-api-terraform"
     key    = "dev/terraform.tfstate"
     region = "us-east-2"
   }

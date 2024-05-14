@@ -16,13 +16,13 @@ Docker: https://docs.docker.com/engine/install/
 
 ### Create Remote backend S3 bucket 
 
-Bucket name: hany-terraformstate
+Bucket name: python-api-terraform
 
 ### Create Helm repo for helm packages
 
-- Bucket name: hh-helm-dev 
+- Bucket name: python-api-helm
 
-- Init the repo: `helm s3 init s3://hh-helm-dev`
+- Init the repo: `helm s3 init s3://python-api-helm`
 
 ## Provision the infrastructure
 
@@ -42,3 +42,13 @@ terraform apply
 ## Update Github secrets
 
 Update Github secrets with IAM access `AWS_ACCESS_KEY_ID` and secret key `AWS_SECRET_ACCESS_KEY` created from the terraform
+
+## local environment
+
+We will use Docker Compose for local development
+
+To start your containers:
+
+`docker compose up -d --build`
+
+Use `localhost:8000` to connect to your app.
