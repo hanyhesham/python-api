@@ -1,0 +1,103 @@
+name: Build and deploy Python API
+on:
+  push:
+    branches: 
+      - main
+env:
+  ECR_REPOSITORY: python-api
+  CHART_NAME: python-api
+  helm_repo: dev
+  cluster: dev
+  AWS_ENV: "851725191021"
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Add short sha env
+        run: echo "SHORT_SHA=`echo ${GITHUB_SHA} | cut -c1-7`" >> $GITHUB_ENV
+
+      - name: Build, tag, and push image to Amazon ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          docker build -f Dockerfile \
+          --tag "$ECR_REGISTRY/$ECR_REPOSITORY:${GITHUB_REF##*/}-$SHORT_SHA" \
+          --tag "$ECR_REGISTRY/$ECR_REPOSITORY:latest" .
+          docker push "$ECR_REGISTRY/$ECR_REPOSITORY:${GITHUB_REF##*/}-$SHORT_SHA"
+          docker push "$ECR_REGISTRY/$ECR_REPOSITORY:latest"
+
+  Deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Add short sha env
+        run: echo "SHORT_SHA=`echo ${GITHUB_SHA} | cut -c1-7`" >> $GITHUB_ENV
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+
+      - name: Set up Helm
+        working-directory: ./helm
+        run: |-
+          wget https://get.helm.sh/helm-v3.7.1-linux-amd64.tar.gz && tar xzvf helm-v3.7.1-linux-amd64.tar.gz
+          sudo mv linux-amd64/helm /usr/bin && sudo chmod a+x /usr/bin/helm
+          rm -rf helm-v3.7.1-linux-amd64.tar.gz linux-amd64
+          helm plugin install https://github.com/hypnoglow/helm-s3.git --version 0.13
+          helm repo add $helm_repo s3://hh-helm-dev
+
+      - name: Build and push helm package
+        working-directory: ./helm
+        run: |-
+          helm dependency update
+          tarName=$(helm package ./ --version "1.0.0-${GITHUB_REF##*/}-$SHORT_SHA" | cut -d: -f2 | sed 's/ //g' | sed 's/.*\///g')
+          helm s3 push "$tarName" $helm_repo
+          tarName=$(helm package ./ --version "1.0.0-${GITHUB_REF##*/}-latest" | cut -d: -f2 | sed 's/ //g' | sed 's/.*\///g')
+          helm s3 push "$tarName" $helm_repo --force
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v2.0
+        with:
+          version: 'latest'
+        id: install
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Set docker tag
+        working-directory: ./helm
+        run: |-
+          sed -i -e "s/latest/${GITHUB_REF##*/}-$SHORT_SHA/g" values.yaml
+
+      - name: Deploy to dev environment
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        working-directory: ./helm
+        run: |-
+          aws eks --region us-east-2 update-kubeconfig --name $cluster
+          helm repo update
+          helm upgrade --install "$CHART_NAME" "$helm_repo/$CHART_NAME" \
+          --set "$CHART_NAME".image="$ECR_REGISTRY/$ECR_REPOSITORY:${GITHUB_REF##*/}-$SHORT_SHA" \
+          --version="1.0.0-${GITHUB_REF##*/}-$SHORT_SHA" \
+          -f values.yaml -n dev --create-namespace
