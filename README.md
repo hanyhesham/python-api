@@ -55,8 +55,6 @@ helm install external-secrets \
 kubectl -n gatekeeper-system get all
 ```
 
-Associate an existing OIDC provider with your EKS cluster
-
 ### Deploy External Secrets Operator:
 
 #### Install the operator
