@@ -40,6 +40,9 @@ module "eks" {
     vpc-cni = {
       most_recent = true
     }
+    aws-ebs-csi-driver = {
+      most_recent = true
+    }
   }
 
   cluster_endpoint_public_access = true
@@ -86,9 +89,9 @@ module "eks" {
   eks_managed_node_groups = {
     dev = {
       name         = "dev"
-      min_size     = 2
+      min_size     = 1
       max_size     = 5
-      desired_size = 2
+      desired_size = 1
       update_config = {
         max_unavailable_percentage = 20 # or set `max_unavailable`
       }

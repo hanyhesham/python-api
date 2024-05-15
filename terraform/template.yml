@@ -1,0 +1,44 @@
+apiVersion: templates.gatekeeper.sh/v1beta1
+kind: ConstraintTemplate
+metadata:
+  name: k8sdenynonrootuser
+  annotations:
+    description: "Ensures that all containers do not run as root user"
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sDenyNonRootUser
+      validation:
+        openAPIV3Schema:
+          properties: {}
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8sdenynonrootuser
+
+        violation[{"msg": msg}] {
+          container := input.review.object.spec.containers[_]
+          not container.securityContext.runAsNonRoot
+          not container.securityContext.runAsUser > 0
+          msg := sprintf("Container '%s' is not configured to run as a non-root user", [container.name])
+        }
+
+        violation[{"msg": msg}] {
+          container := input.review.object.spec.initContainers[_]
+          not container.securityContext.runAsNonRoot
+          not container.securityContext.runAsUser > 0
+          msg := sprintf("Init container '%s' is not configured to run as a non-root user", [container.name])
+        }
+---
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sDenyNonRootUser
+metadata:
+  name: deny-non-root-user
+spec:
+  match:
+    kinds:
+      - apiGroups: [""]
+        kinds: ["Pod"]
+      - apiGroups: ["apps"]
+        kinds: ["Deployment", "StatefulSet", "DaemonSet", "ReplicaSet", "Job", "CronJob"]
