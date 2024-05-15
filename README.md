@@ -10,9 +10,7 @@ AWS CLI: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-instal
 
 Terraform: https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli
 
-minikube: https://minikube.sigs.k8s.io/docs/start/
-
-Docker: https://docs.docker.com/engine/install/
+Docker and Docker Compose: https://docs.docker.com/engine/install/
 
 ### Create Remote backend S3 bucket 
 
