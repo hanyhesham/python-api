@@ -5,9 +5,9 @@ image:
   pullPolicy: Always
   tag: "latest"
 service:
- type: ClusterIP
- port: 8000
- targetport: 8000
+  type: ClusterIP
+  port: 8000
+  targetport: 8000
 resources: 
   requests:
     cpu: 100m
@@ -23,3 +23,9 @@ health:
   path: "/health"
   port: 8000
 runAsUser: 0
+postgresql: 
+  global:
+    postgresql:
+      auth:
+        username: postgres
+        password: postgres
