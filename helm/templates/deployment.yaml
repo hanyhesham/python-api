@@ -34,6 +34,17 @@ spec:
         ports:
         - containerPort: {{ .Values.container.port }}
           protocol: TCP
+        {{- if or (.Values.envConfigs) (.Values.envSecrets) }}
+        envFrom:
+        {{- range $name, $v := .Values.envConfigs }}
+        - configMapRef:
+            name: {{ $v }}
+        {{- end }}    
+        {{- range $name, $v := .Values.envSecrets }}
+        - secretRef:
+            name: {{ $v }}
+        {{- end }}
+        {{- end }}
         livenessProbe:
           httpGet:
             path: {{ .Values.health.path }}
