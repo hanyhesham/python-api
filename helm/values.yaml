@@ -18,6 +18,9 @@ secrets:
   postgres-db-url:
     awssm: postgres-db-url
     key: DB_URL
+  postgres-password:
+    awssm: postgres-password
+    key: postgres-password 
 envSecrets:
  - postgres-db-url
 autoscaling:
@@ -30,8 +33,6 @@ health:
   port: 8000
 runAsUser: 0
 postgresql: 
-  global:
-    postgresql:
-      auth:
-        username: postgres
-        password: postgres
+  auth:
+    username: postgres
+    existingSecret: postgres-password
