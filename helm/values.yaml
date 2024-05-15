@@ -1,7 +1,7 @@
 name: python-api
 replicaCount: 1
 image:
-  repository: python-api
+  repository: 851725191021.dkr.ecr.us-east-2.amazonaws.com/python-api
   pullPolicy: Always
   tag: "latest"
 service:
@@ -11,7 +11,7 @@ service:
 resources: 
   requests:
     cpu: 100m
-    memory: 200m
+    memory: 200Mi
 container:
   port: 8000
 autoscaling:
