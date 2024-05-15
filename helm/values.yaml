@@ -22,4 +22,4 @@ autoscaling:
 health:
   path: "/health"
   port: 8000
-runAsUser: 1000
+runAsUser: 0
